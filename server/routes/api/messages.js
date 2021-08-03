@@ -19,7 +19,7 @@ router.post("/", async (req, res, next) => {
 
     // check if sender is authorized to post messages with conversationId specified in query parameter
     if (conversationId && conversation?.id !== conversationId) {
-      return res.sendStatus(401).json("unauthorized access to the conversation");
+      return res.sendStatus(401);
     }
 
     // create conversation if it doesn't exist.
