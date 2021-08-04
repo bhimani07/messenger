@@ -12,14 +12,15 @@ router.post("/", async (req, res, next) => {
     const { recipientId, text, conversationId, sender } = req.body;
 
     // check if conversation already exist in database
-    let conversation = await Conversation.findConversation(
-      senderId,
-      recipientId
-    );
+    let conversation;
+    if (conversationId) {
+      conversation = await Conversation.findConversationById(conversationId);
 
-    // check if sender is authorized to post messages with conversationId specified in query parameter
-    if (conversationId && conversation?.id !== conversationId) {
-      return res.sendStatus(401);
+      if (conversation
+        && !(conversation.user1Id === senderId || conversation.user1Id === recipientId)
+        && !(conversation.user2Id === senderId || conversation.user2Id === recipientId)) {
+        return res.sendStatus(403);
+      }
     }
 
     // create conversation if it doesn't exist.
