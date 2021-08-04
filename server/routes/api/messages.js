@@ -16,8 +16,8 @@ router.post("/", async (req, res, next) => {
     if (conversationId) {
       conversation = await Conversation.findConversationById(conversationId);
 
-      if (conversation
-        && !(conversation.user1Id === senderId || conversation.user2Id === senderId)) {
+      const isUserInConversation = conversation.user1Id === senderId || conversation.user2Id === senderId;
+      if (conversation && !isUserInConversation) {
         return res.sendStatus(403);
       }
     }

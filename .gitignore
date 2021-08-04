@@ -20,5 +20,3 @@ yarn-debug.log*
 yarn-error.log*
 
 .idea/
-client/package-lock.json
-server/package-lock.json
