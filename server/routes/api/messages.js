@@ -11,14 +11,13 @@ router.post("/", async (req, res, next) => {
     const senderId = req.user.id;
     const { recipientId, text, conversationId, sender } = req.body;
 
-    // check if conversation already exist in database
+    // check if conversation already exist in the database and whether if sender is authorized to post messages in the conversation
     let conversation;
     if (conversationId) {
       conversation = await Conversation.findConversationById(conversationId);
 
       if (conversation
-        && !(conversation.user1Id === senderId || conversation.user1Id === recipientId)
-        && !(conversation.user2Id === senderId || conversation.user2Id === recipientId)) {
+        && !(conversation.user1Id === senderId || conversation.user2Id === senderId)) {
         return res.sendStatus(403);
       }
     }
