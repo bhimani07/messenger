@@ -11,19 +11,19 @@ router.post("/", async (req, res, next) => {
     const senderId = req.user.id;
     const { recipientId, text, conversationId, sender } = req.body;
 
-    // if we already know conversation id, we can save time and just add it to message and return
+    // check if conversation already exist in the database and whether if sender is authorized to post messages in the conversation
+    let conversation;
     if (conversationId) {
-      const message = await Message.create({ senderId, text, conversationId });
-      return res.json({ message, sender });
-    }
-    // if we don't have conversation id, find a conversation to make sure it doesn't already exist
-    let conversation = await Conversation.findConversation(
-      senderId,
-      recipientId
-    );
+      conversation = await Conversation.findConversationById(conversationId);
 
+      const isUserInConversation = conversation.user1Id === senderId || conversation.user2Id === senderId;
+      if (conversation && !isUserInConversation) {
+        return res.sendStatus(403);
+      }
+    }
+
+    // create conversation if it doesn't exist.
     if (!conversation) {
-      // create conversation
       conversation = await Conversation.create({
         user1Id: senderId,
         user2Id: recipientId,
@@ -32,12 +32,14 @@ router.post("/", async (req, res, next) => {
         sender.online = true;
       }
     }
+
     const message = await Message.create({
       senderId,
       text,
       conversationId: conversation.id,
     });
-    res.json({ message, sender });
+
+    res.json({message, sender});
   } catch (error) {
     next(error);
   }
