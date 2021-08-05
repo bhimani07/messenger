@@ -10,6 +10,10 @@ const Message = db.define("message", {
     type: Sequelize.INTEGER,
     allowNull: false,
   },
+  seenOn: {
+    type: Sequelize.DATE,
+    allowNull: true
+  }
 });
 
 module.exports = Message;

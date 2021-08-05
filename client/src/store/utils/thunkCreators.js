@@ -5,6 +5,7 @@ import {
   addConversation,
   setNewMessage,
   setSearchedUsers,
+  resetUnseenCount,
 } from "../conversations";
 import { gotUser, setFetchingStatus } from "../user";
 
@@ -82,6 +83,10 @@ const saveMessage = async (body) => {
   return axios.post("/api/messages", body);
 };
 
+const patchMessage = async (body) => {
+  return axios.patch("/api/messages", body);
+};
+
 const sendMessage = (data, body) => {
   socket.emit("new-message", {
     message: data.message,
@@ -96,12 +101,21 @@ export const postMessage = (body) => async (dispatch) => {
   try {
     const { data } = await saveMessage(body);
     if (!body.conversationId) {
-      dispatch(addConversation(body.recipientId, data.message));
+      dispatch(addConversation(data.message, body.recipientId));
     } else {
       dispatch(setNewMessage(data.message));
     }
 
     sendMessage(data, body);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const updateUnseenCount = (body) => async (dispatch) => {
+  try {
+    await patchMessage(body);
+    dispatch(resetUnseenCount(body.conversationId));
   } catch (error) {
     console.error(error);
   }
