@@ -68,8 +68,22 @@ router.get("/", async (req, res, next) => {
         convoJSON.otherUser.online = false;
       }
 
+      const unseenCount = await Message.count({
+        where: {
+          conversationId: convo.id,
+          isSeen: false,
+          senderId: {
+            [Op.not]: userId
+          }
+        }
+      });
+
+      const seenMessagesByOtherUser = convoJSON.messages.filter(message => message.senderId === userId && message.isSeen);
+      convoJSON.otherUser.lastSeenMessageId = seenMessagesByOtherUser?.[0]?.id;
+
       // set properties for notification count and latest message preview
       convoJSON.latestMessageText = convoJSON.messages[0].text;
+      convoJSON.unseenCount = unseenCount;
       conversations[i] = convoJSON;
     }
 

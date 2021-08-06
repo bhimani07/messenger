@@ -1,3 +1,6 @@
+/* Sets up the environment variables from your .env file*/
+require("dotenv").config();
+
 const db = require("./db");
 const { User } = require("./models");
 const Conversation = require("./models/conversation");
@@ -31,15 +34,18 @@ async function seed() {
   await Message.create({
     conversationId: santaigoConvo.id,
     senderId: santiago.id,
+    isSeen: false,
     text: "Where are you from?",
   });
   await Message.create({
     conversationId: santaigoConvo.id,
+    isSeen: false,
     senderId: thomas.id,
     text: "I'm from New York",
   });
   await Message.create({
     conversationId: santaigoConvo.id,
+    isSeen: false,
     senderId: santiago.id,
     text: "Share photo of your city, please",
   });
@@ -58,6 +64,7 @@ async function seed() {
   await Message.create({
     conversationId: chiumboConvo.id,
     senderId: chiumbo.id,
+    isSeen: false,
     text: "Sure! What time?",
   });
 
@@ -77,6 +84,7 @@ async function seed() {
     await Message.create({
       conversationId: hualingConvo.id,
       senderId: hualing.id,
+      isSeen: false,
       text: "a test message",
     });
   }
@@ -84,6 +92,7 @@ async function seed() {
   await Message.create({
     conversationId: hualingConvo.id,
     senderId: hualing.id,
+    isSeen: false,
     text: "😂 😂 😂",
   });
 

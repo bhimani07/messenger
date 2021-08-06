@@ -1,8 +1,9 @@
 import React, { Component } from "react";
-import { Box } from "@material-ui/core";
+import { Box, Badge } from "@material-ui/core";
 import { BadgeAvatar, ChatContent } from "../Sidebar";
 import { withStyles } from "@material-ui/core/styles";
 import { setActiveChat } from "../../store/activeConversation";
+import { updateConversation } from "../../store/utils/thunkCreators";
 import { connect } from "react-redux";
 
 const styles = {
@@ -22,11 +23,28 @@ const styles = {
 class Chat extends Component {
   handleClick = async (conversation) => {
     await this.props.setActiveChat(conversation.otherUser.username);
+    if (conversation.id) {
+        await this.updateConversationHelper(conversation);
+    }
   };
 
+  async componentDidUpdate(prevProps, prevState, snapshot) {
+    // if there are messages coming from sender in active chat to receiver then dispatch it to mark it as seen!
+    const conversation = this.props.conversation;
+    if (conversation.unseenCount > 0 && this.props.activeConversation === this.props.conversation.otherUser.username) {
+      await this.updateConversationHelper(conversation);
+    }
+  }
+
+  updateConversationHelper = async (conversation) => {
+    const seenMessagesByCurrentUser = conversation.messages.filter(message => message.senderId === conversation.otherUser.id);
+    const lastMessageSeenId = seenMessagesByCurrentUser?.[seenMessagesByCurrentUser.length - 1]?.id;
+    this.props.updateConversation(conversation.id, conversation.otherUser.id, lastMessageSeenId);
+  }
+
   render() {
-    const { classes } = this.props;
-    const otherUser = this.props.conversation.otherUser;
+    const { classes, conversation } = this.props;
+    const { otherUser, unseenCount } = conversation;
     return (
       <Box
         onClick={() => this.handleClick(this.props.conversation)}
@@ -38,7 +56,8 @@ class Chat extends Component {
           online={otherUser.online}
           sidebar={true}
         />
-        <ChatContent conversation={this.props.conversation} />
+        <ChatContent conversation={this.props.conversation} hasNewMessages={unseenCount > 0}/>
+        { unseenCount > 0 && this.props.activeConversation !== otherUser.username && <Badge badgeContent={unseenCount} color="primary"/> }
       </Box>
     );
   }
@@ -49,7 +68,17 @@ const mapDispatchToProps = (dispatch) => {
     setActiveChat: (id) => {
       dispatch(setActiveChat(id));
     },
+    updateConversation: (conversationId, senderId, lastMessageSeenId) => {
+      dispatch(updateConversation({conversationId, senderId, lastMessageSeenId}));
+    }
   };
 };
 
-export default connect(null, mapDispatchToProps)(withStyles(styles)(Chat));
+const mapStateToProps = (state) => {
+  return {
+    user: state.user,
+    activeConversation: state.activeConversation
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(withStyles(styles)(Chat));

@@ -8,6 +8,7 @@ export const addMessageToStore = (state, payload) => {
       messages: [message],
     };
     newConvo.latestMessageText = message.text;
+    newConvo.unseenCount = 1;
     return [newConvo, ...state];
   }
 
@@ -16,7 +17,7 @@ export const addMessageToStore = (state, payload) => {
       const convoCopy = { ...convo };
       convoCopy.messages.push(message);
       convoCopy.latestMessageText = message.text;
-
+      convoCopy.unseenCount += 1;
       return convoCopy;
     } else {
       return convo;
@@ -68,13 +69,40 @@ export const addSearchedUsersToStore = (state, users) => {
   return newState;
 };
 
-export const addNewConvoToStore = (state, recipientId, message) => {
+export const addNewConvoToStore = (state, message,recipientId) => {
   return state.map((convo) => {
     if (convo.otherUser.id === recipientId) {
       const newConvo = { ...convo };
       newConvo.id = message.conversationId;
       newConvo.messages.push(message);
       newConvo.latestMessageText = message.text;
+      newConvo.unseenCount = 1;
+      return newConvo;
+    } else {
+      return convo;
+    }
+  });
+};
+
+export const resetUnseenCountToStore = (state, payload) => {
+  const {conversationId} = payload;
+  return state.map((convo) => {
+    if (convo.id === conversationId) {
+      const newConvo = { ...convo };
+      newConvo.unseenCount = 0;
+      return newConvo;
+    } else {
+      return convo;
+    }
+  });
+};
+
+export const notifySeenOnByReceiptToStore = (state, payload) => {
+  const {conversationId, messageId} = payload;
+  return state.map((convo) => {
+    if (convo.id === conversationId) {
+      const newConvo = { ...convo };
+      newConvo.otherUser.lastSeenMessageId = messageId;
       return newConvo;
     } else {
       return convo;
