@@ -18,7 +18,7 @@ const useStyles = makeStyles((theme) => ({
     color: "#9CADC8",
     letterSpacing: -0.17,
   },
-  activeChat:{
+  newMessages:{
     fontSize: "smaller",
     fontWeight: "bold"
   }
@@ -27,17 +27,17 @@ const useStyles = makeStyles((theme) => ({
 const ChatContent = (props) => {
   const classes = useStyles();
 
-  const { conversation, isActiveChat } = props;
+  const { conversation, hasNewMessages } = props;
   const { latestMessageText, otherUser } = conversation;
 
-  const latestMessageTextClass = isActiveChat ? classes.activeChat : classes.previewText;
+  const messageTextClass = hasNewMessages ? classes.newMessages : classes.previewText;
   return (
     <Box className={classes.root}>
       <Box>
         <Typography className={classes.username}>
           {otherUser.username}
         </Typography>
-        <Typography className={latestMessageTextClass}>
+        <Typography className={messageTextClass}>
           {latestMessageText}
         </Typography>
       </Box>

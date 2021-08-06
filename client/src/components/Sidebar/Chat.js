@@ -24,7 +24,7 @@ class Chat extends Component {
   handleClick = async (conversation) => {
     await this.props.setActiveChat(conversation.otherUser.username);
     if (conversation.id) {
-        await this.calculateAndUpdateTheConversation(conversation);
+        await this.updateConversationHelper(conversation);
     }
   };
 
@@ -32,14 +32,14 @@ class Chat extends Component {
     // if there are messages coming from sender in active chat to receiver then dispatch it to mark it as seen!
     const conversation = this.props.conversation;
     if (conversation.unseenCount > 0 && this.props.activeConversation === this.props.conversation.otherUser.username) {
-      await this.calculateAndUpdateTheConversation(conversation);
+      await this.updateConversationHelper(conversation);
     }
   }
 
-  calculateAndUpdateTheConversation = async (conversation) => {
+  updateConversationHelper = async (conversation) => {
     const seenMessagesByCurrentUser = conversation.messages.filter(message => message.senderId === conversation.otherUser.id);
-    const lastMessageSeenId = seenMessagesByCurrentUser?.length > 0 ? seenMessagesByCurrentUser[seenMessagesByCurrentUser.length - 1].id : undefined;
-    this.props.updateConversation(conversation.id, conversation.otherUser.id, this.props.user.id, lastMessageSeenId);
+    const lastMessageSeenId = seenMessagesByCurrentUser?.[seenMessagesByCurrentUser.length - 1]?.id;
+    this.props.updateConversation(conversation.id, conversation.otherUser.id, lastMessageSeenId);
   }
 
   render() {
@@ -56,7 +56,7 @@ class Chat extends Component {
           online={otherUser.online}
           sidebar={true}
         />
-        <ChatContent conversation={this.props.conversation} isActiveChat={otherUser.username ===  this.props.activeConversation}/>
+        <ChatContent conversation={this.props.conversation} hasNewMessages={unseenCount > 0}/>
         { unseenCount > 0 && this.props.activeConversation !== otherUser.username && <Badge badgeContent={unseenCount} color="primary"/> }
       </Box>
     );
@@ -68,8 +68,8 @@ const mapDispatchToProps = (dispatch) => {
     setActiveChat: (id) => {
       dispatch(setActiveChat(id));
     },
-    updateConversation: (conversationId, senderId, receiptId, lastMessageSeenId) => {
-      dispatch(updateConversation({conversationId, senderId, receiptId, lastMessageSeenId}));
+    updateConversation: (conversationId, senderId, lastMessageSeenId) => {
+      dispatch(updateConversation({conversationId, senderId, lastMessageSeenId}));
     }
   };
 };

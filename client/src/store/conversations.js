@@ -91,7 +91,6 @@ export const notifyMessageSeen = (conversationId, messageId) => {
 const reducer = (state = [], action) => {
   switch (action.type) {
     case GET_CONVERSATIONS:
-      console.log(action.conversations);
       return [...action.conversations.map(conversation => {
         return {...conversation, messages: conversation.messages?.reverse()}
       })];
