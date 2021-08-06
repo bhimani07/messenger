@@ -37,7 +37,7 @@ router.post("/", async (req, res, next) => {
     const message = await Message.create({
       senderId,
       text,
-      seenOn: null,
+      isSeen: false,
       conversationId: conversation.id
     });
 
@@ -48,7 +48,7 @@ router.post("/", async (req, res, next) => {
 });
 
 // expects { conversationId } in body
-router.patch("/", async (req, res, next) => {
+router.patch("/markSeen", async (req, res, next) => {
   try {
     if (!req.user) {
       return res.sendStatus(401);
@@ -56,13 +56,23 @@ router.patch("/", async (req, res, next) => {
     if (!req.body.conversationId) {
       return res.sendStatus(400);
     }
+    if (!req.body.senderId) {
+      return res.sendStatus(400);
+    }
     const receiptId = req.user.id;
     const { conversationId } = req.body;
 
-    await Message.update({seenOn: new Date()},{
+    //check if requesting user belong to the conversation.
+    const conversation = await Conversation.findConversationById(conversationId);
+    const isUserInConversation = conversation?.user1Id === receiptId || conversation?.user2Id === receiptId;
+    if (!conversation || !isUserInConversation) {
+      return res.sendStatus(403);
+    }
+
+    await Message.update({isSeen: true},{
       where:{
         conversationId,
-        seenOn: null,
+        isSeen: false,
         senderId: {
           [Op.not] : receiptId,
         }

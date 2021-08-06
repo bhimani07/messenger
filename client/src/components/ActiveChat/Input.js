@@ -14,6 +14,7 @@ const styles = {
     backgroundColor: "#F4F6FA",
     borderRadius: 8,
     marginBottom: 20,
+    marginTop: "3%"
   },
 };
 

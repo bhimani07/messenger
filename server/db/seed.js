@@ -34,18 +34,18 @@ async function seed() {
   await Message.create({
     conversationId: santaigoConvo.id,
     senderId: santiago.id,
-    seenOn: null,
+    isSeen: false,
     text: "Where are you from?",
   });
   await Message.create({
     conversationId: santaigoConvo.id,
-    seenOn: null,
+    isSeen: false,
     senderId: thomas.id,
     text: "I'm from New York",
   });
   await Message.create({
     conversationId: santaigoConvo.id,
-    seenOn: null,
+    isSeen: false,
     senderId: santiago.id,
     text: "Share photo of your city, please",
   });
@@ -64,7 +64,7 @@ async function seed() {
   await Message.create({
     conversationId: chiumboConvo.id,
     senderId: chiumbo.id,
-    seenOn: null,
+    isSeen: false,
     text: "Sure! What time?",
   });
 
@@ -84,7 +84,7 @@ async function seed() {
     await Message.create({
       conversationId: hualingConvo.id,
       senderId: hualing.id,
-      seenOn: null,
+      isSeen: false,
       text: "a test message",
     });
   }
@@ -92,7 +92,7 @@ async function seed() {
   await Message.create({
     conversationId: hualingConvo.id,
     senderId: hualing.id,
-    seenOn: null,
+    isSeen: false,
     text: "😂 😂 😂",
   });
 

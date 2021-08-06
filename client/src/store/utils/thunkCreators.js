@@ -79,13 +79,9 @@ export const fetchConversations = () => async (dispatch) => {
   }
 };
 
-const saveMessage = async (body) => {
-  return axios.post("/api/messages", body);
-};
+const saveMessage = async (body) => axios.post("/api/messages", body);
 
-const patchMessage = async (body) => {
-  return axios.patch("/api/messages", body);
-};
+const patchMessage = async (conversationId, senderId) => axios.patch("/api/messages/markSeen", {conversationId, senderId});
 
 const sendMessage = (data, body) => {
   socket.emit("new-message", {
@@ -112,14 +108,26 @@ export const postMessage = (body) => async (dispatch) => {
   }
 };
 
-export const updateUnseenCount = (body) => async (dispatch) => {
+export const updateConversation = (body) => async (dispatch) => {
   try {
-    await patchMessage(body);
-    dispatch(resetUnseenCount(body.conversationId));
+    const { data } = await patchMessage(body.conversationId, body.senderId);
+    if (data.success) {
+      dispatch(resetUnseenCount(body.conversationId));
+      if (body.lastMessageSeenId) {
+        notifyMessageSeen(body.conversationId, body.lastMessageSeenId);
+      }
+    }
   } catch (error) {
     console.error(error);
   }
 };
+
+const notifyMessageSeen = (conversationId, messageId) => {
+  socket.emit("seen-by-user", {
+    conversationId,
+    messageId
+  });
+}
 
 export const searchUsers = (searchTerm) => async (dispatch) => {
   try {

@@ -4,7 +4,8 @@ import {
   addSearchedUsersToStore,
   removeOfflineUserFromStore,
   addMessageToStore,
-  resetUnseenCountToStore
+  resetUnseenCountToStore,
+  notifySeenOnByReceiptToStore
 } from "./utils/reducerFunctions";
 
 // ACTIONS
@@ -17,6 +18,7 @@ const SET_SEARCHED_USERS = "SET_SEARCHED_USERS";
 const CLEAR_SEARCHED_USERS = "CLEAR_SEARCHED_USERS";
 const ADD_CONVERSATION = "ADD_CONVERSATION";
 const RESET_UNSEEN_COUNT = "RESET_UNSEEN_COUNT";
+const NOTIFY_MESSAGE_SEEN = "NOTIFY_MESSAGE_SEEN";
 
 // ACTION CREATORS
 
@@ -77,11 +79,19 @@ export const resetUnseenCount = (conversationId) => {
   };
 };
 
+export const notifyMessageSeen = (conversationId, messageId) => {
+  return {
+    type: NOTIFY_MESSAGE_SEEN,
+    payload: { conversationId, messageId },
+  };
+};
+
 // REDUCER
 
 const reducer = (state = [], action) => {
   switch (action.type) {
     case GET_CONVERSATIONS:
+      console.log(action.conversations);
       return [...action.conversations.map(conversation => {
         return {...conversation, messages: conversation.messages?.reverse()}
       })];
@@ -105,6 +115,11 @@ const reducer = (state = [], action) => {
       );
     case RESET_UNSEEN_COUNT:
       return resetUnseenCountToStore(
+        state,
+        action.payload
+      )
+    case NOTIFY_MESSAGE_SEEN:
+      return notifySeenOnByReceiptToStore(
         state,
         action.payload
       )

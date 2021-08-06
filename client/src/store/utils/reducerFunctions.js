@@ -96,3 +96,16 @@ export const resetUnseenCountToStore = (state, payload) => {
     }
   });
 };
+
+export const notifySeenOnByReceiptToStore = (state, payload) => {
+  const {conversationId, messageId} = payload;
+  return state.map((convo) => {
+    if (convo.id === conversationId) {
+      const newConvo = { ...convo };
+      newConvo.otherUser.lastSeenMessageId = messageId;
+      return newConvo;
+    } else {
+      return convo;
+    }
+  });
+};
