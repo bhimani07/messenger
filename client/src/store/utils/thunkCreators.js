@@ -1,5 +1,5 @@
 import axios from "axios";
-import socket from "../../socket";
+import SocketClient from "../../socket";
 import {
   gotConversations,
   addConversation,
@@ -17,6 +17,8 @@ axios.interceptors.request.use(async function (config) {
 });
 
 // USER THUNK CREATORS
+
+let socket = null;
 
 export const fetchUser = () => async (dispatch) => {
   dispatch(setFetchingStatus(true));
@@ -38,6 +40,7 @@ export const register = (credentials) => async (dispatch) => {
     const { data } = await axios.post("/auth/register", credentials);
     await localStorage.setItem("messenger-token", data.token);
     dispatch(gotUser(data));
+    socket = new SocketClient.getSocket();
     socket.emit("go-online", data.id);
   } catch (error) {
     console.error(error);
@@ -50,10 +53,11 @@ export const login = (credentials) => async (dispatch) => {
     const { data } = await axios.post("/auth/login", credentials);
     await localStorage.setItem("messenger-token", data.token);
     dispatch(gotUser(data));
+    socket = new SocketClient.getSocket();
     socket.emit("go-online", data.id);
   } catch (error) {
     console.error(error);
-    dispatch(gotUser({ error: error.response.data.error || "Server Error" }));
+    dispatch(gotUser({ error: error.response?.data?.error || "Server Error" }));
   }
 };
 
@@ -114,7 +118,7 @@ export const updateConversation = (body) => async (dispatch) => {
     if (data.success) {
       dispatch(resetUnseenCount(body.conversationId));
       if (body.lastMessageSeenId) {
-        notifyMessageSeen(body.conversationId, body.lastMessageSeenId);
+        notifyMessageSeen(body.conversationId, body.lastMessageSeenId, body.recipientId);
       }
     }
   } catch (error) {
@@ -122,10 +126,11 @@ export const updateConversation = (body) => async (dispatch) => {
   }
 };
 
-const notifyMessageSeen = (conversationId, messageId) => {
+const notifyMessageSeen = (conversationId, messageId, seenByUserId) => {
   socket.emit("seen-by-user", {
     conversationId,
-    messageId
+    messageId,
+    seenByUserId
   });
 }
 

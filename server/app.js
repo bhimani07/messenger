@@ -17,7 +17,9 @@ const app = express();
 app.use(logger("dev"));
 app.use(json());
 app.use(urlencoded({ extended: false }));
-app.use(express.static(join(__dirname, "public")));
+
+const projectDir = join(__dirname, "..");
+app.use(express.static(join(projectDir, "./client/build")));
 
 app.use(function (req, res, next) {
   const token = req.headers["x-access-token"];
@@ -36,6 +38,10 @@ app.use(function (req, res, next) {
   } else {
     return next();
   }
+});
+
+app.get('/', function (req, res) {
+  res.sendFile(join(__dirname, 'build', 'index.html'));
 });
 
 // require api routes here after I create them
