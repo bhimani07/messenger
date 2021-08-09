@@ -7,6 +7,8 @@ const session = require("express-session");
 const SequelizeStore = require("connect-session-sequelize")(session.Store);
 const db = require("./db");
 const { User } = require("./db/models");
+const http = require("http");
+const socketioJwt = require("socketio-jwt");
 // create store for sessions to persist in database
 const sessionStore = new SequelizeStore({ db });
 
@@ -17,6 +19,8 @@ const app = express();
 app.use(logger("dev"));
 app.use(json());
 app.use(urlencoded({ extended: false }));
+
+let io = null;
 
 const projectDir = join(__dirname, "..");
 app.use(express.static(join(projectDir, "./client/build")));
@@ -65,4 +69,15 @@ app.use(function (err, req, res, next) {
   res.json({ error: err });
 });
 
-module.exports = { app, sessionStore };
+const configureSocket = (server) => {
+  if (!io){
+    io = require("socket.io")(server);
+    io.use(socketioJwt.authorize({
+      secret: process.env.SESSION_SECRET,
+      handshake: true
+    }));
+  }
+  return io;
+}
+
+module.exports = { app, sessionStore, configureSocket };

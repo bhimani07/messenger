@@ -7,7 +7,7 @@ require("dotenv").config();
  * Module dependencies.
  */
 
-const { app, sessionStore } = require("../app");
+const { app, sessionStore, configureSocket } = require("../app");
 const http = require("http");
 const db = require("../db");
 const { onlineUsers, conversations } = require("../activeConnections");
@@ -30,12 +30,7 @@ const server = http.createServer(app);
  * Listen on provided port, on all network interfaces, and sync database.
  */
 
-const io = require("socket.io")(server);
-
-io.use(socketioJwt.authorize({
-  secret: process.env.SESSION_SECRET,
-  handshake: true
-}));
+const io = configureSocket(server);
 
 io.on("connection", (socket) => {
   socket.on("go-online", (id) => {
@@ -43,14 +38,14 @@ io.on("connection", (socket) => {
 
     // send the user who just went online to only active users
     for (const key of Object.keys(onlineUsers)) {
-      socket.broadcast.to(onlineUsers[key]).emit("add-online-user", id);
+      socket.to(onlineUsers[key]).emit("add-online-user", id);
     }
   });
 
   socket.on("new-message", (data) => {
     // if sender field is present, then this is going to be new conversation
     if (onlineUsers[data.recipientId]) {
-      socket.broadcast.to(onlineUsers[data.recipientId]).emit("new-message", {
+      socket.to(onlineUsers[data.recipientId]).emit("new-message", {
         message: data.message,
         sender: data.sender,
       });
@@ -70,7 +65,7 @@ io.on("connection", (socket) => {
     // notify only the other user of the conversation if online
     const otherUser = conversations[data.conversationId]?.find(userId => userId !== data.seenByUserId);
     if (onlineUsers[otherUser]) {
-      socket.broadcast.to(onlineUsers[otherUser]).emit("seen-by-user", {
+      socket.to(onlineUsers[otherUser]).emit("seen-by-user", {
         conversationId: data.conversationId,
         messageId: data.messageId,
       });
@@ -82,7 +77,7 @@ io.on("connection", (socket) => {
       if (onlineUsers[id]) delete onlineUsers[id];
 
       for (const key of Object.keys(onlineUsers)) {
-        socket.broadcast.to(onlineUsers[key]).emit("remove-offline-user", id);
+        socket.to(onlineUsers[key]).emit("remove-offline-user", id);
       }
 
       // delete or update any relevant conversation
