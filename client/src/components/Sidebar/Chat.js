@@ -39,7 +39,7 @@ class Chat extends Component {
   updateConversationHelper = async (conversation) => {
     const seenMessagesByCurrentUser = conversation.messages.filter(message => message.senderId === conversation.otherUser.id);
     const lastMessageSeenId = seenMessagesByCurrentUser?.[seenMessagesByCurrentUser.length - 1]?.id;
-    this.props.updateConversation(conversation.id, conversation.otherUser.id, lastMessageSeenId);
+    this.props.updateConversation(conversation.id, conversation.otherUser.id, this.props.user.id, lastMessageSeenId);
   }
 
   render() {
@@ -68,8 +68,8 @@ const mapDispatchToProps = (dispatch) => {
     setActiveChat: (id) => {
       dispatch(setActiveChat(id));
     },
-    updateConversation: (conversationId, senderId, lastMessageSeenId) => {
-      dispatch(updateConversation({conversationId, senderId, lastMessageSeenId}));
+    updateConversation: (conversationId, senderId, recipientId, lastMessageSeenId) => {
+      dispatch(updateConversation({conversationId, senderId, recipientId, lastMessageSeenId}));
     }
   };
 };

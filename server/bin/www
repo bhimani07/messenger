@@ -7,10 +7,11 @@ require("dotenv").config();
  * Module dependencies.
  */
 
-const { app, sessionStore } = require("../app");
+const { app, sessionStore, configureSocket } = require("../app");
 const http = require("http");
 const db = require("../db");
-const onlineUsers = require("../onlineUsers");
+const { onlineUsers, conversations } = require("../activeConnections");
+const socketioJwt = require('socketio-jwt');
 
 /**
  * Get port from environment and store in Express.
@@ -29,37 +30,67 @@ const server = http.createServer(app);
  * Listen on provided port, on all network interfaces, and sync database.
  */
 
-const io = require("socket.io")(server);
+const io = configureSocket(server);
 
 io.on("connection", (socket) => {
   socket.on("go-online", (id) => {
-    if (!onlineUsers.includes(id)) {
-      onlineUsers.push(id);
+    if (!onlineUsers[id]) onlineUsers[id] = socket.id;
+
+    // send the user who just went online to only active users
+    for (const key of Object.keys(onlineUsers)) {
+      socket.to(onlineUsers[key]).emit("add-online-user", id);
     }
-    // send the user who just went online to everyone else who is already online
-    socket.broadcast.emit("add-online-user", id);
   });
 
   socket.on("new-message", (data) => {
-    socket.broadcast.emit("new-message", {
-      message: data.message,
-      sender: data.sender,
-    });
+    // if sender field is present, then this is going to be new conversation
+    if (onlineUsers[data.recipientId]) {
+      socket.to(onlineUsers[data.recipientId]).emit("new-message", {
+        message: data.message,
+        sender: data.sender,
+      });
+    }
+
+    // put sender and/or receiver in conversations map
+    if (!conversations[data.message.conversationId]) {
+      conversations[data.message.conversationId] = [data.message.senderId, data.recipientId];
+    } else if (!conversations[data.message.conversationId].includes(data.message.senderId)) {
+      conversations[data.message.conversationId].push(data.message.senderId);
+    } else if (!conversations[data.message.conversationId].includes(data.recipientId)) {
+      conversations[data.message.conversationId].push(data.recipientId);
+    }
   });
 
   socket.on("seen-by-user", (data) => {
-    socket.broadcast.emit("seen-by-user", {
-      conversationId: data.conversationId,
-      messageId: data.messageId,
-    });
+    // notify only the other user of the conversation if online
+    const otherUser = conversations[data.conversationId]?.find(userId => userId !== data.seenByUserId);
+    if (onlineUsers[otherUser]) {
+      socket.to(onlineUsers[otherUser]).emit("seen-by-user", {
+        conversationId: data.conversationId,
+        messageId: data.messageId,
+      });
+    }
   });
 
   socket.on("logout", (id) => {
-    if (onlineUsers.includes(id)) {
-      userIndex = onlineUsers.indexOf(id);
-      onlineUsers.splice(userIndex, 1);
-      socket.broadcast.emit("remove-offline-user", id);
-    }
+      // remove onlineUser
+      if (onlineUsers[id]) delete onlineUsers[id];
+
+      for (const key of Object.keys(onlineUsers)) {
+        socket.to(onlineUsers[key]).emit("remove-offline-user", id);
+      }
+
+      // delete or update any relevant conversation
+      for (const key in conversations) {
+        if (conversations[key].length === 1 && conversations[key][0] === id) {
+          delete conversations[key];
+        } else {
+          const removeIndex = conversations[key].indexOf(id);
+          if (removeIndex !== -1) {
+            conversations[key].splice(removeIndex, 1);
+          }
+        }
+      }
   });
 });
 
